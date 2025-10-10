@@ -1,4 +1,4 @@
-# Pulsar B1919+21
+# Animated Pulsar Generator
 
 An animated visualization of the famous pulsar B1919+21 radio signal data, inspired by the iconic graphic discovered at Jodrell Bank Observatory.
 
