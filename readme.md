@@ -26,7 +26,7 @@ Simply open the `index.html` file in any modern web browser.
 
 ## Technical Details
 
-- 35 horizontal lines with procedurally generated waves
+- 20-80 horizontal lines with procedurally generated waves
 - Each wave features 1-2 random peaks with variable heights
 - Gaussian curves with asymmetric profiles for realistic pulses
 - Canvas-based rendering for smooth performance
