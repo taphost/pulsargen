@@ -9,16 +9,12 @@ This project recreates the characteristic wave patterns of pulsar B1919+21, the 
 ## Features
 
 - **Real-time procedural animation** with randomly generated wave patterns
-- **Pause/Play** control to freeze and resume animation
-- **Regenerate** button to create new random patterns
-- **Save as PNG** to export the current frame as an image
-- **Export HTML code** - copy to clipboard or download as file
 - **Fully responsive** design for mobile and desktop
 - **Zero dependencies** - pure HTML, CSS, and JavaScript
 
 ## Usage
 
-Simply open the `pulsar-b1919+21.html` file in any modern web browser.
+Simply open the `index.html` file in any modern web browser.
 
 ### Controls
 
@@ -52,7 +48,7 @@ No installation required. Just download and open in a browser.
 ```bash
 # Clone or download the file
 # Open in browser
-open pulsar-b1919+21.html
+open index.html
 ```
 
 ## Historical Context
