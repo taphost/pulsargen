@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulsar B1919+21</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 800px;
+            padding: 40px 20px;
+            background: #000;
+        }
+        
+        h1 {
+            color: #fff;
+            font-size: 2.5em;
+            margin: 0 0 20px 0;
+            font-weight: normal;
+            letter-spacing: 2px;
+        }
+        
+        canvas {
+            width: 100%;
+            height: auto;
+            border: 2px solid #333;
+        }
+        
+        .info {
+            color: #fff;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9em;
+        }
+        
+        .controls {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        button {
+            background: #fff;
+            color: #000;
+            border: none;
+            padding: 12px 20px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 0.85em;
+            transition: background 0.3s;
+            min-width: 140px;
+            touch-action: manipulation;
+        }
+        
+        button:hover {
+            background: #ccc;
+        }
+        
+        button:active {
+            background: #999;
+        }
+        
+        .export-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #333;
+        }
+        
+        .export-section h3 {
+            color: #fff;
+            font-size: 1em;
+            margin-bottom: 10px;
+            font-weight: normal;
+            text-align: center;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fff;
+            color: #000;
+            padding: 15px 25px;
+            font-family: 'Courier New', monospace;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(255,255,255,0.3);
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            button {
+                display: block;
+                width: 100%;
+                margin: 8px 0;
+                padding: 15px;
+                font-size: 0.9em;
+            }
+            
+            .controls, .export-section {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .info {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pulsar B1919+21</h1>
+        <canvas id="canvas"></canvas>
+        <div class="info">
+            <span>15th June 2019</span>
+            <span>Jodrell Bank Observatory<br>The University of Manchester</span>
+        </div>
+        
+        <div class="controls">
+            <button id="pauseBtn">Pause</button>
+            <button id="resetBtn">Regenerate</button>
+            <button id="saveBtn">💾 Save as PNG</button>
+        </div>
+        
+        <div class="export-section">
+            <h3>Export HTML Code</h3>
+            <button id="copyBtn">📋 Copy Code</button>
+            <button id="downloadBtn">💾 Save as HTML</button>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification"></div>
+
+    <script>
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        
+        canvas.width = 800;
+        canvas.height = 600;
+        
+        var numLines = 35;
+        var lineSpacing = canvas.height / (numLines + 1);
+        var points = 150;
+        
+        var animating = true;
+        var phase = 0;
+        
+        var pauseBtn = document.getElementById('pauseBtn');
+        var resetBtn = document.getElementById('resetBtn');
+        var saveBtn = document.getElementById('saveBtn');
+        var copyBtn = document.getElementById('copyBtn');
+        var downloadBtn = document.getElementById('downloadBtn');
+        
+        function generateWave(lineIndex, phase) {
+            var wave = [];
+            var numPeaks = Math.floor(Math.random() * 2) + 1;
+            var peaks = [];
+            
+            for (var i = 0; i < numPeaks; i++) {
+                peaks.push({
+                    position: 0.3 + Math.random() * 0.4,
+                    width: 0.05 + Math.random() * 0.1,
+                    height: 20 + Math.random() * 60,
+                    asymmetry: 0.5 + (Math.random() - 0.5) * 0.3
+                });
+            }
+            
+            for (var i = 0; i < points; i++) {
+                var x = (i / points);
+                var y = 0;
+                
+                for (var p = 0; p < peaks.length; p++) {
+                    var peak = peaks[p];
+                    var dist = Math.abs(x - peak.position);
+                    if (dist < peak.width) {
+                        var side = x < peak.position ? 'left' : 'right';
+                        var sharpness = side === 'left' ? peak.asymmetry : (1 - peak.asymmetry);
+                        var normalized = dist / peak.width;
+                        var curve = Math.pow(1 - normalized, 2 + sharpness * 3);
+                        y += peak.height * curve;
+                    }
+                }
+                
+                y += (Math.random() - 0.5) * 3;
+                var oscillation = Math.sin(phase + lineIndex * 0.1 + x * Math.PI * 2) * 2;
+                y += oscillation;
+                
+                wave.push({
+                    x: x * canvas.width,
+                    y: y
+                });
+            }
+            
+            return wave;
+        }
+        
+        var waves = [];
+        for (var i = 0; i < numLines; i++) {
+            waves.push(generateWave(i, 0));
+        }
+        
+        function draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            
+            for (var i = 0; i < numLines; i++) {
+                var baseY = lineSpacing * (i + 1);
+                var wave = waves[i];
+                
+                ctx.beginPath();
+                ctx.moveTo(0, baseY);
+                
+                for (var j = 0; j < wave.length; j++) {
+                    var point = wave[j];
+                    ctx.lineTo(point.x, baseY - point.y);
+                }
+                
+                ctx.lineTo(canvas.width, baseY);
+                ctx.stroke();
+            }
+        }
+        
+        function animate() {
+            if (animating) {
+                phase += 0.02;
+                
+                for (var i = 0; i < numLines; i++) {
+                    waves[i] = generateWave(i, phase);
+                }
+                
+                draw();
+            }
+            
+            requestAnimationFrame(animate);
+        }
+        
+        function toggleAnimation() {
+            animating = !animating;
+            pauseBtn.textContent = animating ? 'Pause' : 'Play';
+        }
+        
+        function resetWaves() {
+            phase = Math.random() * 1000;
+            for (var i = 0; i < numLines; i++) {
+                waves[i] = generateWave(i, phase);
+            }
+            draw();
+        }
+        
+        function savePNG() {
+            var link = document.createElement('a');
+            link.download = 'pulsar-b1919+21.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            showNotification('✓ PNG image saved!');
+        }
+        
+        function showNotification(message) {
+            var notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            setTimeout(function() {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        function getExportableCode() {
+            var code = '<!DOCTYPE html>\n';
+            code += '<html lang="en">\n';
+            code += '<head>\n';
+            code += '    <meta charset="UTF-8">\n';
+            code += '    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n';
+            code += '    <title>Pulsar B1919+21</title>\n';
+            code += '    <style>\n';
+            code += '        body { margin: 0; padding: 0; background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: "Courier New", monospace; overflow: hidden; }\n';
+            code += '        .container { width: 90%; max-width: 800px; padding: 40px; background: #000; }\n';
+            code += '        h1 { color: #fff; font-size: 2.5em; margin: 0 0 20px 0; font-weight: normal; letter-spacing: 2px; }\n';
+            code += '        canvas { width: 100%; height: auto; border: 2px solid #333; }\n';
+            code += '        .info { color: #fff; margin-top: 20px; display: flex; justify-content: space-between; font-size: 0.9em; }\n';
+            code += '    </style>\n';
+            code += '</head>\n';
+            code += '<body>\n';
+            code += '    <div class="container">\n';
+            code += '        <h1>Pulsar B1919+21</h1>\n';
+            code += '        <canvas id="canvas"></canvas>\n';
+            code += '        <div class="info">\n';
+            code += '            <span>15th June 2019</span>\n';
+            code += '            <span>Jodrell Bank Observatory<br>The University of Manchester</span>\n';
+            code += '        </div>\n';
+            code += '    </div>\n';
+            code += '    <script>\n';
+            code += '        var canvas = document.getElementById("canvas");\n';
+            code += '        var ctx = canvas.getContext("2d");\n';
+            code += '        canvas.width = 800;\n';
+            code += '        canvas.height = 600;\n';
+            code += '        var numLines = 35;\n';
+            code += '        var lineSpacing = canvas.height / (numLines + 1);\n';
+            code += '        var points = 150;\n';
+            code += '        var phase = 0;\n';
+            code += '        function generateWave(lineIndex, phase) {\n';
+            code += '            var wave = [];\n';
+            code += '            var numPeaks = Math.floor(Math.random() * 2) + 1;\n';
+            code += '            var peaks = [];\n';
+            code += '            for (var i = 0; i < numPeaks; i++) {\n';
+            code += '                peaks.push({ position: 0.3 + Math.random() * 0.4, width: 0.05 + Math.random() * 0.1, height: 20 + Math.random() * 60, asymmetry: 0.5 + (Math.random() - 0.5) * 0.3 });\n';
+            code += '            }\n';
+            code += '            for (var i = 0; i < points; i++) {\n';
+            code += '                var x = (i / points);\n';
+            code += '                var y = 0;\n';
+            code += '                for (var p = 0; p < peaks.length; p++) {\n';
+            code += '                    var peak = peaks[p];\n';
+            code += '                    var dist = Math.abs(x - peak.position);\n';
+            code += '                    if (dist < peak.width) {\n';
+            code += '                        var side = x < peak.position ? "left" : "right";\n';
+            code += '                        var sharpness = side === "left" ? peak.asymmetry : (1 - peak.asymmetry);\n';
+            code += '                        var normalized = dist / peak.width;\n';
+            code += '                        var curve = Math.pow(1 - normalized, 2 + sharpness * 3);\n';
+            code += '                        y += peak.height * curve;\n';
+            code += '                    }\n';
+            code += '                }\n';
+            code += '                y += (Math.random() - 0.5) * 3;\n';
+            code += '                var oscillation = Math.sin(phase + lineIndex * 0.1 + x * Math.PI * 2) * 2;\n';
+            code += '                y += oscillation;\n';
+            code += '                wave.push({ x: x * canvas.width, y: y });\n';
+            code += '            }\n';
+            code += '            return wave;\n';
+            code += '        }\n';
+            code += '        var waves = [];\n';
+            code += '        for (var i = 0; i < numLines; i++) { waves.push(generateWave(i, 0)); }\n';
+            code += '        function draw() {\n';
+            code += '            ctx.fillStyle = "#000";\n';
+            code += '            ctx.fillRect(0, 0, canvas.width, canvas.height);\n';
+            code += '            ctx.strokeStyle = "#fff";\n';
+            code += '            ctx.lineWidth = 1.5;\n';
+            code += '            for (var i = 0; i < numLines; i++) {\n';
+            code += '                var baseY = lineSpacing * (i + 1);\n';
+            code += '                var wave = waves[i];\n';
+            code += '                ctx.beginPath();\n';
+            code += '                ctx.moveTo(0, baseY);\n';
+            code += '                for (var j = 0; j < wave.length; j++) {\n';
+            code += '                    var point = wave[j];\n';
+            code += '                    ctx.lineTo(point.x, baseY - point.y);\n';
+            code += '                }\n';
+            code += '                ctx.lineTo(canvas.width, baseY);\n';
+            code += '                ctx.stroke();\n';
+            code += '            }\n';
+            code += '        }\n';
+            code += '        function animate() {\n';
+            code += '            phase += 0.02;\n';
+            code += '            for (var i = 0; i < numLines; i++) { waves[i] = generateWave(i, phase); }\n';
+            code += '            draw();\n';
+            code += '            requestAnimationFrame(animate);\n';
+            code += '        }\n';
+            code += '        animate();\n';
+            code += '    </' + 'script>\n';
+            code += '</body>\n';
+            code += '</html>';
+            return code;
+        }
+        
+        pauseBtn.onclick = toggleAnimation;
+        resetBtn.onclick = resetWaves;
+        saveBtn.onclick = savePNG;
+        
+        copyBtn.onclick = function() {
+            var code = getExportableCode();
+            navigator.clipboard.writeText(code).then(function() {
+                showNotification('✓ Code copied to clipboard!');
+            }).catch(function() {
+                showNotification('✗ Copy error');
+            });
+        };
+        
+        downloadBtn.onclick = function() {
+            var code = getExportableCode();
+            var blob = new Blob([code], { type: 'text/html' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'pulsar-b1919+21.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showNotification('✓ HTML file downloaded!');
+        };
+        
+        animate();
+        draw();
+    </script>
+</body>
+</html>
