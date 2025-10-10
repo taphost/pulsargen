@@ -39,8 +39,10 @@
   .header {
     margin:0 0 8px 0;
   }
-  h1 { margin:30; color:var(--ui-fg); font-size:5.3rem; font-weight:normal; letter-spacing:1px; }
-  .info { color:#bfbfbf; margin-bottom:12px; font-size:0.9rem; }
+   
+  
+  h1 { margin: 0px; color:var(--ui-fg); white-space: nowrap; font-size: clamp(1rem, 8vw, 5.3rem); font-weight:normal; letter-spacing:1px; }
+  .info { color:#fff; margin-bottom:12px; font-size:1rem; }
 
   .canvas-wrap {
     width:100%;
@@ -86,19 +88,51 @@
 
   /* modal */
   #codeModal { display:none; position:fixed; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:3000; align-items:center; justify-content:center; }
-  #codeModal .box { background:#0f0f0f; color:var(--ui-fg); padding:18px; border-radius:8px; max-width:92%; max-height:84%; overflow:auto; border:1px solid var(--panel-border); }
+  #codeModal .box { background:#0f0f0f; color:var(--ui-fg); padding:18px; border-radius:8px; max-width:92%; max-height:84%; overflow:auto; border:1px solid var(--panel-border)ff Lines
+38
+
+Line Thickness
+1.5
+ Lines
+37
+
+Line Thickness
+1.5
+; }
   #codeModal pre { background:#000; color:#0f0; padding:12px; overflow:auto; white-space:pre-wrap; font-family:inherit; }
 
-  /* Easter Egg */
+   /* Easter Egg */
   body.easter-egg-active {
+    --ui-bg: #000000;
     --panel-border: #000000;
   }
-  .info {
-    color: #fff;
-    margin-top: 12px;
-    font-size: 4rem;
+
+  body.easter-egg-active .header {
+    position: relative;
+    top: 70px;
+    left: 0;
+    right: 0;
+    z-index: 10;
+  }
+
+  body.easter-egg-active h1 {
+    font-size: clamp(1rem, 8vw, 8.5rem);
+	white-space: nowrap;
+    margin: 0;
     text-align: center;
-    width: 100%;
+  }
+
+  body.easter-egg-active .info {
+    position: absolute;
+    bottom: 0px;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    color: #fff;
+    font-size: clamp(1rem, 8vw, 4.8rem);
+	white-space: nowrap;
+    text-align: center;
+    margin: 0;
   }
 
   /* Responsive Layout */
