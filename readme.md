@@ -68,7 +68,3 @@ MIT License - Copyright (c) 2025 - Free to use, modify, and distribute.
 ## Contributing
 
 Feel free to fork, modify, and use this project for educational or artistic purposes.
-
----
-
-**Made with ❤️ for astronomy and data visualization enthusiasts**
