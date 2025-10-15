@@ -5,106 +5,257 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Pulsar Generator</title>
 <style>
-  :root{
+  :root {
     --ui-bg: #000000;
     --ui-fg: #fff;
     --panel-bg: rgba(255,255,255,0.03);
     --panel-border: #333;
     --accent: #fff;
+    --accent-paused: #ff6b6b;
     --sidebar-width: 320px;
     font-family: "Helvetica", monospace;
   }
-  html,body{height:100%;margin:0;background:var(--ui-bg);color:var(--ui-fg);}
-  .page{
-    min-height:100vh;
-    display:flex;
-    align-items:flex-start;
-    justify-content:center;
-    gap:22px;
-    padding:16px;
-    box-sizing:border-box;
+  
+  html, body {
+    height: 100%;
+    margin: 0;
+    background: var(--ui-bg);
+    color: var(--ui-fg);
+    overflow-x: hidden;
+  }
+  
+  .page {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 22px;
+    padding: 16px;
+    box-sizing: border-box;
   }
 
-  /* center stage: title + canvas */
   .stage {
-	flex:1 1 auto;
-	max-width: calc(100% - var(--sidebar-width) - 80px);
-	min-width:320px;
-	display:flex;
-	justify-content:center;
-	align-items:center;
-	flex-direction:column;
-   }
+    flex: 1 1 auto;
+    max-width: calc(100% - var(--sidebar-width) - 80px);
+    min-width: 520px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
 
   .header {
-    margin:0 0 8px 0;
+    margin: 0 0 8px 0;
   }
-   
   
-  h1 { margin: 0px; color:var(--ui-fg); white-space: nowrap; font-size: clamp(1rem, 8vw, 5.3rem); font-weight:normal; letter-spacing:1px; }
-  .info { color:#fff; margin-bottom:12px; font-size:1rem; }
+  h1 {
+    margin: 0px;
+    color: var(--ui-fg);
+    white-space: nowrap;
+    font-size: 5.3rem;
+    font-weight: normal;
+    letter-spacing: 1px;
+  }
+  
+  .info {
+    color: #fff;
+    margin-bottom: 12px;
+    font-size: 1rem;
+  }
 
   .canvas-wrap {
-    width:100%;
-    max-width:900px;
-    border:2px solid var(--panel-border);
-    box-sizing:border-box;
-    background:transparent;
-    border-radius:6px;
-    overflow:hidden; /* ensure no scrollbars inside */
+    width: 100%;
+    max-width: 900px;
+    border: 2px solid var(--panel-border);
+    box-sizing: border-box;
+    background: transparent;
+    border-radius: 6px;
+    overflow: hidden;
   }
-  /* Important: NO padding on canvas itself (prevents drawing offset/clipping) */
-  canvas { display:block; width:100%; height:auto; background:transparent; }
+  
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: transparent;
+  }
 
-  /* Right column controls */
   .sidebar {
-    width:var(--sidebar-width);
+    width: var(--sidebar-width);
     flex-shrink: 0;
-    max-height:calc(100vh - 32px);
-    overflow-y:auto;
-    padding:24px;
-    box-sizing:border-box;
-    background:var(--panel-bg);
-    border:1px solid var(--panel-border);
-    border-radius:10px;
-    display:flex;
-    flex-direction:column;
-    gap:24px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 24px;
+    box-sizing: border-box;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
   }
-  .title { color:var(--ui-fg); font-size:1.2rem; margin-bottom:6px; font-weight: bold; text-align: center; }
-  .muted { color:#bfbfbf; font-size:0.88rem; }
+  
+  .title {
+    color: var(--ui-fg);
+    font-size: 1.2rem;
+    margin-bottom: 6px;
+    font-weight: bold;
+    text-align: center;
+  }
 
-  .control-group { display:flex; flex-direction:column; gap:10px; }
-  label.inline { display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:1rem; color:var(--ui-fg); }
-  input[type="range"]{ width:100%; -webkit-appearance:none; appearance:none; height:8px; background:#222; border-radius:6px; }
-  input[type="range"]::-webkit-slider-thumb{ -webkit-appearance:none; width:16px;height:16px;border-radius:50%; background:var(--accent); border:2px solid #666; cursor:pointer; }
-  input[type="color"]{ width:46px; height:30px; padding:0; border:none; background:transparent; cursor:pointer; }
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  label.inline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    color: var(--ui-fg);
+    position: relative;
+  }
+  
+  label.inline span {
+    flex: 1;
+    max-width: 200px;
+    word-wrap: break-word;
+  }
+  
+  .tooltip {
+    position: relative;
+    cursor: help;
+  }
+  
+  .tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.95);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1000;
+    border: 1px solid var(--panel-border);
+  }
+  
+  .tooltip:hover::after {
+    opacity: 1;
+  }
+  
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 8px;
+    background: #222;
+    border-radius: 6px;
+  }
+  
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid #666;
+    cursor: pointer;
+  }
+  
+  input[type="color"] {
+    width: 46px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+  }
 
-  .row { display:flex; gap:10px;  justify-content:space-between; }
-  .button-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
-  button { background:var(--accent); color:var(--ui-bg); border:none; padding:10px 12px; font-family:inherit; cursor:pointer; border-radius:8px; }
-  .small { padding:8px 10px; font-size:1rem; min-width:120px; }
-  .notification { position:fixed; top:18px; right:18px; background:var(--accent); color:var(--ui-bg); padding:10px 14px; border-radius:8px; display:none; z-index:2000; font-family:inherit; }
+  .button-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  
+  button {
+    background: var(--accent);
+    color: var(--ui-bg);
+    border: none;
+    padding: 10px 12px;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: transform 0.1s ease;
+  }
+  
+  button:hover {
+    transform: translateY(-2px);
+  }
+  
+  button:active {
+    transform: translateY(0);
+  }
+  
+  .notification {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    background: var(--accent);
+    color: var(--ui-bg);
+    padding: 10px 14px;
+    border-radius: 8px;
+    display: none;
+    z-index: 2000;
+    font-family: inherit;
+  }
 
-  /* modal */
-  #codeModal { display:none; position:fixed; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:3000; align-items:center; justify-content:center; }
-  #codeModal .box { background:#0f0f0f; color:var(--ui-fg); padding:18px; border-radius:8px; max-width:92%; max-height:84%; overflow:auto; border:1px solid var(--panel-border)ff Lines
-38
+  #codeModal {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.75);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  #codeModal .box {
+    background: #0f0f0f;
+    color: var(--ui-fg);
+    padding: 18px;
+    border-radius: 8px;
+    max-width: 92%;
+    max-height: 84%;
+    overflow: auto;
+    border: 1px solid var(--panel-border);
+  }
+  
+  #codeModal pre {
+    background: #000;
+    color: #0f0;
+    padding: 12px;
+    overflow: auto;
+    white-space: pre-wrap;
+    font-family: inherit;
+  }
 
-Line Thickness
-1.5
- Lines
-37
-
-Line Thickness
-1.5
-; }
-  #codeModal pre { background:#000; color:#0f0; padding:12px; overflow:auto; white-space:pre-wrap; font-family:inherit; }
-
-   /* Easter Egg */
-  body.easter-egg-active {
-    --ui-bg: #000000;
-    --panel-border: #000000;
+  body.easter-egg-active .canvas-wrap {
+    border-color: #000000;
   }
 
   body.easter-egg-active .header {
@@ -117,7 +268,7 @@ Line Thickness
 
   body.easter-egg-active h1 {
     font-size: clamp(1rem, 8vw, 8.5rem);
-	white-space: nowrap;
+    white-space: nowrap;
     margin: 0;
     text-align: center;
   }
@@ -130,36 +281,70 @@ Line Thickness
     z-index: 10;
     color: #fff;
     font-size: clamp(1rem, 8vw, 4.8rem);
-	white-space: nowrap;
+    white-space: nowrap;
     text-align: center;
     margin: 0;
   }
 
-  /* Responsive Layout */
-  @media (max-width:1024px){
-    .page{ flex-direction:column; padding:12px; gap:12px; align-items:center; }
-    .stage{ max-width:100%; order: 1; }
-    .sidebar{ width:100%; max-width:900px; order: 2; max-height: none; }
-    h1 { font-size: 3rem; text-align: center; }
+  @media (max-width:1024px) {
+    .page {
+      flex-direction: column;
+      padding: 12px;
+      gap: 12px;
+      align-items: center;
+    }
+    .stage {
+      max-width: 100%;
+      min-width: 320px;
+      order: 1;
+    }
+    .sidebar {
+      width: 100%;
+      max-width: 900px;
+      order: 2;
+      max-height: none;
+    }
+    h1 {
+      font-size: 3rem;
+      text-align: center;
+    }
+    .status-indicator {
+      right: -28px;
+    }
   }
 
-  @media (max-width:600px){
-    h1 { font-size: 2.2rem; }
-    .sidebar { padding: 16px; gap: 20px; }
-    .button-grid { grid-template-columns: 1fr 1fr; }
+  @media (max-width:600px) {
+    h1 {
+      font-size: 2.2rem;
+    }
+    .sidebar {
+      padding: 16px;
+      gap: 20px;
+    }
   }
 
   @media (max-height: 500px) and (orientation: landscape) {
-    .page { flex-direction: row; align-items: stretch; }
-    .stage { order: 1; flex-basis: 60%; }
-    .sidebar { order: 2; flex-basis: 40%; min-width: 300px; }
-    h1 { font-size: 2rem; }
+    .page {
+      flex-direction: row;
+      align-items: stretch;
+    }
+    .stage {
+      order: 1;
+      flex-basis: 60%;
+    }
+    .sidebar {
+      order: 2;
+      flex-basis: 40%;
+      min-width: 300px;
+    }
+    h1 {
+      font-size: 2rem;
+    }
   }
 </style>
 </head>
 <body>
   <div class="page">
-    <!-- Main stage: canvas and info -->
     <div class="stage">
       <div class="header">
         <h1>PULSAR GENERATOR</h1>
@@ -171,41 +356,64 @@ Line Thickness
       <div class="info" id="easterEggInfo" style="display: none;">UNKNOWN PLEASURES</div>
     </div>
 
-    <!-- Controls Sidebar -->
     <aside class="sidebar" role="complementary" aria-label="Controls">
       <div class="title">Controls</div>
 
       <div class="control-group">
-        <label class="inline"><span>Number of Lines</span><strong id="lineCount">35</strong></label>
+        <label class="inline">
+          <span class="tooltip" data-tooltip="Number of horizontal lines">Lines</span>
+          <strong id="lineCount">35</strong>
+        </label>
         <input id="lineSlider" type="range" min="20" max="80" value="35" step="1">
       </div>
 
       <div class="control-group">
-        <label class="inline"><span>Line Thickness</span><strong id="thicknessVal">1.5</strong></label>
+        <label class="inline">
+          <span class="tooltip" data-tooltip="Thickness in pixels">Thickness</span>
+          <strong id="thicknessVal">1.5</strong>
+        </label>
         <input id="thicknessSlider" type="range" min="0.5" max="6" step="0.1" value="1.5">
       </div>
 
       <div class="control-group">
-        <label class="inline"><span>FPS (frames/sec)</span><strong id="fpsVal">30</strong></label>
+        <label class="inline">
+          <span class="tooltip" data-tooltip="Frames per second">FPS</span>
+          <strong id="fpsVal">30</strong>
+        </label>
         <input id="fpsSlider" type="range" min="1" max="60" step="1" value="30">
       </div>
 
       <div class="control-group">
-        <label class="inline"><span>Line Color</span><input id="colorPicker" type="color" value="#ffffff"></label>
-        <label class="inline"><span>Canvas Color</span><input id="bgPicker" type="color" value="#000000"></label>
-        <label class="inline"><span>Invert Canvas Color</span><input id="invertCheckbox" type="checkbox"></label>
-        <label class="inline"><span>Auto Stretch Canvas and Lines </span><input id="autoStretch" type="checkbox" checked></label>
-        <label class="inline"><span>Auto Zoom Out</span><input id="autoZoom" type="checkbox"></label>
+        <label class="inline">
+          <span>Line Color</span>
+          <input id="colorPicker" type="color" value="#ffffff">
+        </label>
+        <label class="inline">
+          <span>Canvas Color</span>
+          <input id="bgPicker" type="color" value="#000000">
+        </label>
+        <label class="inline">
+          <span class="tooltip" data-tooltip="Swap colors">Invert</span>
+          <input id="invertCheckbox" type="checkbox">
+        </label>
+        <label class="inline">
+          <span class="tooltip" data-tooltip="Stretch height with lines">Auto Stretch</span>
+          <input id="autoStretch" type="checkbox" checked>
+        </label>
+        <label class="inline">
+          <span class="tooltip" data-tooltip="Zoom out with more lines">Auto Zoom</span>
+          <input id="autoZoom" type="checkbox">
+        </label>
       </div>
 
       <div class="control-group">
         <div class="button-grid">
-          <button id="pauseBtn" class="small">Pause</button>
-          <button id="resetBtn" class="small">Regenerate</button>
-		  <button id="savePngBtn" class="small">💾 Save PNG</button>
-          <button id="copyBtn" class="small">📋 Copy Code</button>
-		  <button id="downloadBtn" class="small">💾 Save HTML</button>
-          <button id="showCodeBtn" class="small">📄 Show Code</button>
+          <button id="playBtn" title="Play (Space)">▶ Play</button>
+          <button id="pauseBtn" title="Pause (Space)">⏸ Pause</button>
+          <button id="resetBtn" title="Reset (R)">🔄 Reset</button>
+          <button id="savePngBtn">💾 PNG</button>
+          <button id="downloadBtn">💾 HTML</button>
+          <button id="showCodeBtn">📄 Code</button>
         </div>
       </div>
     </aside>
@@ -213,98 +421,124 @@ Line Thickness
 
   <div id="notification" class="notification" role="status" aria-live="polite"></div>
 
-  <!-- Code Modal -->
   <div id="codeModal" aria-hidden="true">
+    <div id="modalNotification" style="display:none;position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--ui-bg);padding:12px 20px;border-radius:8px;text-align:center;z-index:4000;font-size:1rem;">✓ Copied</div>
     <div class="box">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <strong>Generated HTML code</strong>
-        <button id="closeModalBtn" class="small">Close</button>
+        <strong>Generated HTML</strong>
+        <div style="display:flex;gap:10px;">
+          <button id="copyModalBtn">Copy</button>
+          <button id="closeModalBtn">Close</button>
+        </div>
       </div>
       <pre id="codeDisplay"></pre>
     </div>
   </div>
-</body>
 
 <script>
-/* ---------- Config & state ---------- */
-const canvas = document.getElementById('canvas');
-const canvasWrap = document.getElementById('canvasWrap');
-const ctx = canvas.getContext('2d');
-const stage = document.querySelector('.stage');
+/* ========== CONFIG ========== */
+const CONFIG = {
+  canvas: {
+    baseWidth: 900,
+    baseHeight: 600,
+    maxPeakHeight: 90,
+    topMargin: 15
+  },
+  animation: {
+    phaseIncrement: 0.02,
+    defaultFps: 30
+  },
+  wave: {
+    defaultLineCount: 35,
+    defaultThickness: 1.5,
+    points: 150
+  },
+  colors: {
+    defaultLine: '#ffffff',
+    defaultBackground: '#000000'
+  }
+};
 
-const lineSlider = document.getElementById('lineSlider');
-const lineCountDisplay = document.getElementById('lineCount');
-const pauseBtn = document.getElementById('pauseBtn');
-const resetBtn = document.getElementById('resetBtn');
-const savePngBtn = document.getElementById('savePngBtn');
-const copyBtn = document.getElementById('copyBtn');
-const downloadBtn = document.getElementById('downloadBtn');
-const showCodeBtn = document.getElementById('showCodeBtn');
-const codeModal = document.getElementById('codeModal');
-const codeDisplay = document.getElementById('codeDisplay');
-const closeModalBtn = document.getElementById('closeModalBtn');
-const notification = document.getElementById('notification');
+/* ========== STATE ========== */
+const state = {
+  numLines: CONFIG.wave.defaultLineCount,
+  lineThickness: CONFIG.wave.defaultThickness,
+  fps: CONFIG.animation.defaultFps,
+  phase: 0,
+  animating: true,
+  lastRenderTime: 0,
+  waves: []
+};
 
-const colorPicker = document.getElementById('colorPicker');
-const bgPicker = document.getElementById('bgPicker');
-const invertCheckbox = document.getElementById('invertCheckbox');
-const autoStretch = document.getElementById('autoStretch');
-const autoZoom = document.getElementById('autoZoom');
+/* ========== DOM ========== */
+const el = {
+  canvas: document.getElementById('canvas'),
+  canvasWrap: document.getElementById('canvasWrap'),
+  stage: document.querySelector('.stage'),
+  lineSlider: document.getElementById('lineSlider'),
+  lineCountDisplay: document.getElementById('lineCount'),
+  thicknessSlider: document.getElementById('thicknessSlider'),
+  thicknessVal: document.getElementById('thicknessVal'),
+  fpsSlider: document.getElementById('fpsSlider'),
+  fpsVal: document.getElementById('fpsVal'),
+  colorPicker: document.getElementById('colorPicker'),
+  bgPicker: document.getElementById('bgPicker'),
+  invertCheckbox: document.getElementById('invertCheckbox'),
+  autoStretch: document.getElementById('autoStretch'),
+  autoZoom: document.getElementById('autoZoom'),
+  playBtn: document.getElementById('playBtn'),
+  pauseBtn: document.getElementById('pauseBtn'),
+  resetBtn: document.getElementById('resetBtn'),
+  savePngBtn: document.getElementById('savePngBtn'),
+  downloadBtn: document.getElementById('downloadBtn'),
+  showCodeBtn: document.getElementById('showCodeBtn'),
+  codeModal: document.getElementById('codeModal'),
+  codeDisplay: document.getElementById('codeDisplay'),
+  copyModalBtn: document.getElementById('copyModalBtn'),
+  closeModalBtn: document.getElementById('closeModalBtn'),
+  modalNotification: document.getElementById('modalNotification'),
+  notification: document.getElementById('notification'),
+  h1: document.querySelector('h1'),
+  easterEggInfo: document.getElementById('easterEggInfo')
+};
 
-const thicknessSlider = document.getElementById('thicknessSlider');
-const thicknessVal = document.getElementById('thicknessVal');
-const fpsSlider = document.getElementById('fpsSlider');
-const fpsVal = document.getElementById('fpsVal');
-
-let numLines = parseInt(lineSlider.value,10) || 35;
-let points = 150;
-let phase = 0;
-let animating = true;
-let lastRenderTime = 0;
-
-const baseWidth = 900;    // preferred CSS width
-const baseHeight = 600;   // preferred CSS height when not stretched
-
+const ctx = el.canvas.getContext('2d');
 const DPR = Math.max(window.devicePixelRatio || 1, 1);
 
-/* Worst-case peak height estimate (peaks 20..80 + oscillation + noise)
-   Use a safe margin so first line is never clipped. */
-const MAX_PEAK_HEIGHT = 90; // px
-const TOP_MARGIN = 15; // extra margin
-
-let lineThickness = parseFloat(thicknessSlider.value) || 1.5;
-let fps = parseInt(fpsSlider.value,10) || 30;
-
-let waves = [];
-
-/* ---------- Utilities ---------- */
-function showNotification(msg, ms=1800){
-  notification.textContent = msg;
-  notification.style.display = 'block';
-  clearTimeout(notification._t);
-  notification._t = setTimeout(()=> notification.style.display = 'none', ms);
-}
-
-/* Generate wave points with x normalized (0..1) */
-function generateWave(lineIndex, phaseLocal){
-  const wave = [];
-  const numPeaks = Math.floor(Math.random() * 2) + 1;
-  const peaks = [];
-  for (let i=0;i<numPeaks;i++){
-    peaks.push({
-      position: 0.25 + Math.random()*0.5,
-      width: 0.05 + Math.random()*0.12,
-      height: 20 + Math.random()*60, // 20..80
-      asymmetry: 0.5 + (Math.random()-0.5)*0.3
-    });
-  }
-  for (let i=0;i<points;i++){
-    const xNorm = i / points;
+/* ========== WAVE GENERATOR ========== */
+const WaveGen = {
+  generate(lineIndex, phaseLocal) {
+    const wave = [];
+    const numPeaks = Math.floor(Math.random() * 2) + 1;
+    const peaks = this._makePeaks(numPeaks);
+    
+    for (let i = 0; i < CONFIG.wave.points; i++) {
+      const xNorm = i / CONFIG.wave.points;
+      let y = this._calcPeaks(xNorm, peaks);
+      y += this._addNoise(xNorm, lineIndex, phaseLocal);
+      wave.push({ x: xNorm, y });
+    }
+    return wave;
+  },
+  
+  _makePeaks(num) {
+    const peaks = [];
+    for (let i = 0; i < num; i++) {
+      peaks.push({
+        position: 0.25 + Math.random() * 0.5,
+        width: 0.05 + Math.random() * 0.12,
+        height: 20 + Math.random() * 60,
+        asymmetry: 0.5 + (Math.random() - 0.5) * 0.3
+      });
+    }
+    return peaks;
+  },
+  
+  _calcPeaks(xNorm, peaks) {
     let y = 0;
-    for (let p=0;p<peaks.length;p++){
-      const peak = peaks[p];
+    for (const peak of peaks) {
       const dist = Math.abs(xNorm - peak.position);
-      if (dist < peak.width){
+      if (dist < peak.width) {
         const side = xNorm < peak.position ? 'left' : 'right';
         const sharpness = side === 'left' ? peak.asymmetry : (1 - peak.asymmetry);
         const normalized = dist / peak.width;
@@ -312,229 +546,200 @@ function generateWave(lineIndex, phaseLocal){
         y += peak.height * curve;
       }
     }
-    y += (Math.random() - 0.5) * 3;
-    y += Math.sin(phaseLocal + lineIndex * 0.1 + xNorm * Math.PI * 2) * 2;
-    wave.push({ x: xNorm, y });
-  }
-  return wave;
-}
-
-/* Resize canvas CSS pixels & backing store for DPR */
-function resizeCanvasAccordingToSettings(){
-  // compute desired css width: prefer baseWidth but clamp to container
-  const wrapW = canvasWrap.clientWidth || baseWidth;
-  const cssWidth = Math.min(baseWidth, Math.max(320, Math.round(wrapW)));
-  let cssHeight = baseHeight;
-  if (autoStretch.checked){
-    // stretch linearly with number of lines (35 -> baseHeight)
-    const scale = Math.max(1, numLines / 35);
-    cssHeight = Math.round(baseHeight * scale);
-    // clamp to a reasonable maximum to avoid insane sizes
-    cssHeight = Math.min(cssHeight, 2000);
-  }
-
-  // Apply CSS size and backing store sized by DPR
-  canvas.style.width = cssWidth + 'px';
-  canvas.style.height = cssHeight + 'px';
-  canvas.width = Math.round(cssWidth * DPR);
-  canvas.height = Math.round(cssHeight * DPR);
-  // use transform so we draw in CSS pixels coordinates
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-}
-
-/* Update layout / waves count */
-function updateLayoutAndWaves(){
-  resizeCanvasAccordingToSettings();
-  // ensure waves array matches numLines
-  while (waves.length < numLines) waves.push(generateWave(waves.length, phase));
-  if (waves.length > numLines) waves = waves.slice(0, numLines);
-}
-
-/* Draw once */
-function draw(){
-  // CSS-space sizes
-  const cssW = canvas.width / DPR;
-  const cssH = canvas.height / DPR;
-
-  // effective colors for canvas only
-  let canvasBg = bgPicker.value || '#000000';
-  let lineColor = colorPicker.value || '#ffffff';
-  if (invertCheckbox.checked){
-    // swap for display without touching page styles
-    const t = canvasBg; canvasBg = lineColor; lineColor = t;
-  }
-
-  // clear & bg
-  ctx.clearRect(0,0, canvas.width, canvas.height);
-  ctx.save();
-  ctx.fillStyle = canvasBg;
-  ctx.fillRect(0,0, cssW, cssH);
-
-  // line style
-  ctx.lineWidth = lineThickness;
-  ctx.strokeStyle = lineColor;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-
-  // topOffset chosen large enough to never clip the highest peaks
-  const topOffset = MAX_PEAK_HEIGHT + TOP_MARGIN + lineThickness;
-  const bottomOffset = topOffset;
-  let availableHeight = cssH - topOffset - bottomOffset;
-  if (availableHeight < 20) { availableHeight = cssH - topOffset; }
-
-  // compute spacing so lines fit
-  const spacing = (numLines > 1) ? (availableHeight / (numLines - 1)) : 0;
-
-  // draw each wave
-  for (let i=0;i<numLines;i++){
-    const baseY = Math.round(topOffset + i * spacing);
-    const wave = waves[i] || generateWave(i, phase);
-    ctx.beginPath();
-    ctx.moveTo(0, baseY);
-    for (let j=0;j<wave.length;j++){
-      const pt = wave[j];
-      const x = pt.x * cssW;
-      ctx.lineTo(x, baseY - pt.y);
-    }
-    ctx.lineTo(cssW, baseY);
-    ctx.stroke();
-  }
-
-  ctx.restore();
-}
-
-function updateStageScale(){
-  let scale = 1;
-  if (autoZoom.checked) {
-    const baseLines = 35;
-    const maxLines = 80;
-    const minScale = 0.60; // Min scale factor for zoom out
-
-    if (numLines > baseLines) {
-      const progress = (numLines - baseLines) / (maxLines - baseLines);
-      scale = 1 - progress * (1 - minScale);
-    }
-  }
+    return y;
+  },
   
-  stage.style.transform = `scale(${scale})`;
-  stage.style.transformOrigin = 'top';
-}
-
-/* FPS-limited animation loop using rAF */
-function animateRAF(ts){
-  requestAnimationFrame(animateRAF);
-  if (!lastRenderTime) lastRenderTime = ts;
-  const interval = 1000 / fps;
-  const elapsed = ts - lastRenderTime;
-  if (elapsed < interval) return;
-  lastRenderTime = ts - (elapsed % interval);
-
-  if (animating){
-    phase += 0.02;
-    for (let i=0;i<numLines;i++){
-      waves[i] = generateWave(i, phase);
+  _addNoise(xNorm, lineIndex, phaseLocal) {
+    let noise = (Math.random() - 0.5) * 3;
+    noise += Math.sin(phaseLocal + lineIndex * 0.1 + xNorm * Math.PI * 2) * 2;
+    return noise;
+  },
+  
+  regenerateAll() {
+    state.waves = [];
+    for (let i = 0; i < state.numLines; i++) {
+      state.waves.push(this.generate(i, state.phase));
     }
   }
-  draw();
-}
+};
 
-/* ---------- UI Events ---------- */
-
-lineSlider.addEventListener('input', () => {
-  numLines = parseInt(lineSlider.value,10) || 35;
-  lineCountDisplay.textContent = numLines;
-  updateLayoutAndWaves();
-  updateStageScale();
-  draw();
-});
-
-thicknessSlider.addEventListener('input', () => {
-  lineThickness = parseFloat(thicknessSlider.value) || 1.5;
-  thicknessVal.textContent = lineThickness.toFixed(1);
-  draw();
-});
-
-fpsSlider.addEventListener('input', () => {
-  fps = parseInt(fpsSlider.value,10) || 30;
-  fpsVal.textContent = fps;
-});
-
-pauseBtn.addEventListener('click', () => {
-  animating = !animating;
-  pauseBtn.textContent = animating ? 'Pause' : 'Play';
-
-  // Easter Egg Trigger
-  if (!animating && parseInt(lineSlider.value, 10) === 80 && autoStretch.checked && autoZoom.checked) {
-    document.querySelector('h1').textContent = 'JOY DIVISION';
-    document.getElementById('easterEggInfo').style.display = 'block';
-    document.body.classList.add('easter-egg-active');
+/* ========== RENDERER ========== */
+const Render = {
+  resizeCanvas() {
+    const wrapW = el.canvasWrap.clientWidth || CONFIG.canvas.baseWidth;
+    const cssWidth = Math.min(CONFIG.canvas.baseWidth, Math.max(320, Math.round(wrapW)));
+    let cssHeight = CONFIG.canvas.baseHeight;
+    
+    if (el.autoStretch.checked) {
+      const scale = Math.max(1, state.numLines / CONFIG.wave.defaultLineCount);
+      cssHeight = Math.min(2000, Math.round(CONFIG.canvas.baseHeight * scale));
+    }
+    
+    el.canvas.style.width = cssWidth + 'px';
+    el.canvas.style.height = cssHeight + 'px';
+    el.canvas.width = Math.round(cssWidth * DPR);
+    el.canvas.height = Math.round(cssHeight * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  },
+  
+  updateTitleSize() {
+    const canvasWidth = el.canvas.offsetWidth;
+    
+    // Check if easter egg is active
+    if (document.body.classList.contains('easter-egg-active')) {
+      const easterFontSize = Math.max(2, Math.min(8.5, canvasWidth / 105));
+      el.h1.style.fontSize = easterFontSize + 'rem';
+      el.easterEggInfo.style.fontSize = Math.max(1, Math.min(4.8, canvasWidth / 187)) + 'rem';
+    } else {
+      const fontSize = Math.max(2, Math.min(5.3, canvasWidth / 170));
+      el.h1.style.fontSize = fontSize + 'rem';
+    }
+  },
+  
+  getColors() {
+    let bg = el.bgPicker.value || CONFIG.colors.defaultBackground;
+    let fg = el.colorPicker.value || CONFIG.colors.defaultLine;
+    if (el.invertCheckbox.checked) {
+      [bg, fg] = [fg, bg];
+    }
+    return { bg, fg };
+  },
+  
+  draw() {
+    const cssW = el.canvas.width / DPR;
+    const cssH = el.canvas.height / DPR;
+    const { bg, fg } = this.getColors();
+    
+    ctx.clearRect(0, 0, el.canvas.width, el.canvas.height);
+    ctx.save();
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, cssW, cssH);
+    
+    ctx.lineWidth = state.lineThickness;
+    ctx.strokeStyle = fg;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    
+    const topOffset = CONFIG.canvas.maxPeakHeight + CONFIG.canvas.topMargin + state.lineThickness;
+    const bottomOffset = topOffset;
+    let availableHeight = cssH - topOffset - bottomOffset;
+    if (availableHeight < 20) availableHeight = cssH - topOffset;
+    const spacing = (state.numLines > 1) ? (availableHeight / (state.numLines - 1)) : 0;
+    
+    for (let i = 0; i < state.numLines; i++) {
+      const baseY = Math.round(topOffset + i * spacing);
+      const wave = state.waves[i];
+      if (!wave) continue;
+      
+      ctx.beginPath();
+      ctx.moveTo(0, baseY);
+      for (const pt of wave) {
+        const x = pt.x * cssW;
+        ctx.lineTo(x, baseY - pt.y);
+      }
+      ctx.lineTo(cssW, baseY);
+      ctx.stroke();
+    }
+    
+    ctx.restore();
+    this.updateTitleSize();
   }
-});
+};
 
-resetBtn.addEventListener('click', () => {
-  phase = Math.random() * 1000;
-  waves = [];
-  for (let i=0;i<numLines;i++) waves.push(generateWave(i, phase));
-  draw();
+/* ========== ANIMATION ========== */
+const Anim = {
+  updateWaves() {
+    state.phase += CONFIG.animation.phaseIncrement;
+    for (let i = 0; i < state.numLines; i++) {
+      state.waves[i] = WaveGen.generate(i, state.phase);
+    }
+  },
+  
+  loop(ts) {
+    requestAnimationFrame((t) => Anim.loop(t));
+    
+    if (!state.lastRenderTime) state.lastRenderTime = ts;
+    const interval = 1000 / state.fps;
+    const elapsed = ts - state.lastRenderTime;
+    if (elapsed < interval) return;
+    state.lastRenderTime = ts - (elapsed % interval);
+    
+    if (state.animating) {
+      this.updateWaves();
+    }
+    Render.draw();
+  },
+  
+  play() {
+    state.animating = true;
+  },
+  
+  pause() {
+    state.animating = false;
+    UI.checkEasterEgg();
+  }
+};
 
-  // Reset Easter Egg
-  document.querySelector('h1').textContent = 'PULSAR GENERATOR';
-  document.getElementById('easterEggInfo').style.display = 'none';
-  document.body.classList.remove('easter-egg-active');
-});
+/* ========== UI ========== */
+const UI = {
+  showNotif(msg, ms = 1800) {
+    el.notification.textContent = msg;
+    el.notification.style.display = 'block';
+    clearTimeout(el.notification._t);
+    el.notification._t = setTimeout(() => {
+      el.notification.style.display = 'none';
+    }, ms);
+  },
+  
+  updateStageScale() {
+    let scale = 1;
+    if (el.autoZoom.checked) {
+      const baseLines = CONFIG.wave.defaultLineCount;
+      const maxLines = 80;
+      const minScale = 0.60;
+      if (state.numLines > baseLines) {
+        const progress = (state.numLines - baseLines) / (maxLines - baseLines);
+        scale = 1 - progress * (1 - minScale);
+      }
+    }
+    el.stage.style.transform = `scale(${scale})`;
+    el.stage.style.transformOrigin = 'top';
+  },
+  
+  updateLayout() {
+    Render.resizeCanvas();
+    while (state.waves.length < state.numLines) {
+      state.waves.push(WaveGen.generate(state.waves.length, state.phase));
+    }
+    if (state.waves.length > state.numLines) {
+      state.waves = state.waves.slice(0, state.numLines);
+    }
+  },
+  
+  checkEasterEgg() {
+    if (state.numLines === 80 && el.autoStretch.checked && el.autoZoom.checked) {
+      if (document.body.classList.contains('easter-egg-active')) {
+        this.resetEasterEgg();
+      } else {
+        el.h1.textContent = 'JOY DIVISION';
+        el.easterEggInfo.style.display = 'block';
+        document.body.classList.add('easter-egg-active');
+      }
+    }
+  },
+  
+  resetEasterEgg() {
+    el.h1.textContent = 'PULSAR GENERATOR';
+    el.easterEggInfo.style.display = 'none';
+    document.body.classList.remove('easter-egg-active');
+  }
+};
 
-[colorPicker, bgPicker, invertCheckbox, autoStretch].forEach(el => {
-  el.addEventListener('input', () => {
-    updateLayoutAndWaves();
-    draw();
-  });
-  el.addEventListener('change', () => {
-    updateLayoutAndWaves();
-    draw();
-  });
-});
-
-autoZoom.addEventListener('change', updateStageScale);
-
-window.addEventListener('resize', () => {
-  updateLayoutAndWaves();
-  draw();
-});
-
-/* Save PNG */
-savePngBtn.addEventListener('click', () => {
-  // toDataURL will include DPR backing store => full resolution PNG
-  const url = canvas.toDataURL('image/png');
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'pulsarimg.png';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  showNotification('✓ PNG saved');
-});
-
-/* ---------- Export (copy / download) ---------- */
-
-function getEffectiveCanvasColors(){
-  let bg = bgPicker.value || '#000000';
-  let fg = colorPicker.value || '#ffffff';
-  if (invertCheckbox.checked){ const t = bg; bg = fg; fg = t; }
-  return { bg, fg };
-}
-
-/* Minimal canvas-only HTML generator (embeds current settings) */
-function generateCanvasOnlyHTML(){
-  const { bg, fg } = getEffectiveCanvasColors();
-  const exportNumLines = numLines;
-  const exportThickness = lineThickness;
-  const exportPoints = points;
-  const exportFPS = fps;
-  const exportAutoStretch = autoStretch.checked;
-  const exportBaseWidth = baseWidth;
-  const exportBaseHeight = baseHeight;
-  // we will embed a compact script using similar logic (normalized x)
-  return `<!doctype html>
+/* ========== EXPORT ========== */
+const Export = {
+  generateHTML() {
+    const { bg, fg } = Render.getColors();
+    return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -546,96 +751,90 @@ function generateCanvasOnlyHTML(){
 <canvas id="canvas"></canvas>
 <script>
 (function(){
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-  const DPR = Math.max(window.devicePixelRatio||1,1);
-  const MAX_PEAK = ${MAX_PEAK_HEIGHT};
-  const TOP_MARGIN = ${TOP_MARGIN};
-  const numLines = ${exportNumLines};
-  const points = ${exportPoints};
-  let phase = ${phase.toFixed(3)};
-  const fg = "${fg}";
-  const bg = "${bg}";
-  const thickness = ${exportThickness};
-  const fps = ${exportFPS};
-  // fit function
+  const canvas=document.getElementById('canvas');
+  const ctx=canvas.getContext('2d');
+  const DPR=Math.max(window.devicePixelRatio||1,1);
+  const MAX_PEAK=${CONFIG.canvas.maxPeakHeight};
+  const TOP_MARGIN=${CONFIG.canvas.topMargin};
+  const numLines=${state.numLines};
+  const points=${CONFIG.wave.points};
+  let phase=${state.phase.toFixed(3)};
+  const fg="${fg}";
+  const bg="${bg}";
+  const thickness=${state.lineThickness};
+  const fps=${state.fps};
   function fit(){
-    const cssW = Math.max(320, Math.min(window.innerWidth, ${exportBaseWidth}));
-    let cssH = ${exportBaseHeight};
-    if (${exportAutoStretch}) {
-      const scale = Math.max(1, numLines / 35);
-      cssH = Math.min(2000, Math.round(cssH * scale));
-    } else {
-      cssH = ${exportBaseHeight};
+    const cssW=Math.max(320,Math.min(window.innerWidth,${CONFIG.canvas.baseWidth}));
+    let cssH=${CONFIG.canvas.baseHeight};
+    if(${el.autoStretch.checked}){
+      const scale=Math.max(1,numLines/35);
+      cssH=Math.min(2000,Math.round(cssH*scale));
     }
-    canvas.style.width = cssW + 'px';
-    canvas.style.height = cssH + 'px';
-    canvas.width = Math.round(cssW * DPR);
-    canvas.height = Math.round(cssH * DPR);
+    canvas.style.width=cssW+'px';
+    canvas.style.height=cssH+'px';
+    canvas.width=Math.round(cssW*DPR);
+    canvas.height=Math.round(cssH*DPR);
     ctx.setTransform(DPR,0,0,DPR,0,0);
   }
-  window.addEventListener('resize', fit);
+  window.addEventListener('resize',fit);
   fit();
-  // generator
-  function generateWave(lineIndex, phaseLocal){
-    const wave=[]; const numPeaks = Math.floor(Math.random()*2)+1; const peaks=[];
-    for(let i=0;i<numPeaks;i++){
-      peaks.push({position:0.25+Math.random()*0.5,width:0.05+Math.random()*0.12,height:20+Math.random()*60,asymmetry:0.5+(Math.random()-0.5)*0.3});
+  function genWave(idx,ph){
+    const w=[];const np=Math.floor(Math.random()*2)+1;const p=[];
+    for(let i=0;i<np;i++){
+      p.push({position:0.25+Math.random()*0.5,width:0.05+Math.random()*0.12,height:20+Math.random()*60,asymmetry:0.5+(Math.random()-0.5)*0.3});
     }
     for(let i=0;i<points;i++){
-      const xNorm = i/points; let y=0;
-      for(let p=0;p<peaks.length;p++){
-        const peak=peaks[p]; const dist = Math.abs(xNorm-peak.position);
-        if(dist<peak.width){
-          const side = xNorm < peak.position ? 'left' : 'right';
-          const sharpness = side === 'left' ? peak.asymmetry : (1-peak.asymmetry);
-          const normalized = dist/peak.width;
-          const curve = Math.pow(1-normalized, 2+sharpness*3);
-          y += peak.height * curve;
+      const xN=i/points;let y=0;
+      for(const pk of p){
+        const d=Math.abs(xN-pk.position);
+        if(d<pk.width){
+          const s=xN<pk.position?'left':'right';
+          const sh=s==='left'?pk.asymmetry:(1-pk.asymmetry);
+          const n=d/pk.width;
+          const c=Math.pow(1-n,2+sh*3);
+          y+=pk.height*c;
         }
       }
-      y += (Math.random()-0.5)*3;
-      y += Math.sin(phaseLocal + lineIndex*0.1 + xNorm*Math.PI*2)*2;
-      wave.push({x: xNorm, y});
+      y+=(Math.random()-0.5)*3;
+      y+=Math.sin(ph+idx*0.1+xN*Math.PI*2)*2;
+      w.push({x:xN,y});
     }
-    return wave;
+    return w;
   }
-  // initialize waves
-  let waves = [];
-  for(let i=0;i<numLines;i++) waves.push(generateWave(i, phase));
-  const interval = 1000 / Math.max(1, fps);
-  let last = performance.now();
+  let waves=[];
+  for(let i=0;i<numLines;i++)waves.push(genWave(i,phase));
+  const iv=1000/Math.max(1,fps);
+  let last=performance.now();
   function drawOnce(){
-    const cssW = canvas.width / DPR; const cssH = canvas.height / DPR;
+    const cssW=canvas.width/DPR;const cssH=canvas.height/DPR;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.save();
-    ctx.fillStyle = bg; ctx.fillRect(0,0,cssW,cssH);
-    ctx.strokeStyle = fg; ctx.lineWidth = thickness; ctx.lineCap='round'; ctx.lineJoin='round';
-    const topOffset = MAX_PEAK + TOP_MARGIN + thickness;
-    const bottomOffset = topOffset;
-    let availableHeight = cssH - topOffset - bottomOffset;
-    if(availableHeight < 20) availableHeight = cssH - topOffset;
-    const spacing = (numLines>1) ? (availableHeight / (numLines-1)) : 0;
+    ctx.fillStyle=bg;ctx.fillRect(0,0,cssW,cssH);
+    ctx.strokeStyle=fg;ctx.lineWidth=thickness;ctx.lineCap='round';ctx.lineJoin='round';
+    const top=MAX_PEAK+TOP_MARGIN+thickness;
+    const bot=top;
+    let ah=cssH-top-bot;
+    if(ah<20)ah=cssH-top;
+    const sp=(numLines>1)?(ah/(numLines-1)):0;
     for(let i=0;i<numLines;i++){
-      const baseY = Math.round(topOffset + i*spacing);
-      const wave = waves[i];
-      ctx.beginPath(); ctx.moveTo(0, baseY);
-      for(let j=0;j<wave.length;j++){
-        const pt = wave[j];
-        const x = pt.x * cssW;
-        ctx.lineTo(x, baseY - pt.y);
+      const by=Math.round(top+i*sp);
+      const w=waves[i];
+      ctx.beginPath();ctx.moveTo(0,by);
+      for(const pt of w){
+        const x=pt.x*cssW;
+        ctx.lineTo(x,by-pt.y);
       }
-      ctx.lineTo(cssW, baseY); ctx.stroke();
+      ctx.lineTo(cssW,by);ctx.stroke();
     }
     ctx.restore();
   }
   function loop(now){
     requestAnimationFrame(loop);
-    const elapsed = now - last;
-    if(elapsed < interval) return;
-    last = now - (elapsed % interval);
-    phase += 0.02;
-    for(let i=0;i<numLines;i++) waves[i] = generateWave(i, phase);
+    const el=now-last;
+    if(el<iv)return;
+    last=now-(el%iv);
+    phase+=0.02;
+    for(let i=0;i<numLines;i++)waves[i]=genWave(i,phase);
     drawOnce();
   }
   requestAnimationFrame(loop);
@@ -643,60 +842,182 @@ function generateCanvasOnlyHTML(){
 <\/script>
 </body>
 </html>`;
+  },
+  
+  savePNG() {
+    const url = el.canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pulsar.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    UI.showNotif('✓ PNG saved');
+  },
+  
+  downloadHTML() {
+    const code = this.generateHTML();
+    const blob = new Blob([code], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'pulsar.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    UI.showNotif('✓ HTML saved');
+  },
+  
+  showModal() {
+    const code = this.generateHTML();
+    el.codeDisplay.textContent = code;
+    el.modalNotification.style.display = 'none';
+    el.codeModal.style.display = 'flex';
+  },
+  
+  async copyCode() {
+    const code = el.codeDisplay.textContent;
+    try {
+      await navigator.clipboard.writeText(code);
+      el.modalNotification.textContent = '✓ Copied';
+      el.modalNotification.style.display = 'block';
+      setTimeout(() => {
+        el.modalNotification.style.display = 'none';
+      }, 2000);
+    } catch(e) {
+      el.modalNotification.textContent = '✗ Failed';
+      el.modalNotification.style.display = 'block';
+      setTimeout(() => {
+        el.modalNotification.style.display = 'none';
+      }, 2000);
+    }
+  },
+  
+  closeModal() {
+    el.codeModal.style.display = 'none';
+    el.modalNotification.style.display = 'none';
+  }
+};
+
+/* ========== EVENTS ========== */
+function debounce(fn, ms) {
+  let t;
+  return function(...args) {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
 }
 
-/* Copy code to clipboard */
-copyBtn.addEventListener('click', async () => {
-  const code = generateCanvasOnlyHTML();
-  try {
-    await navigator.clipboard.writeText(code);
-    showNotification('✓ Code saved to the clipboard');
-    codeDisplay.textContent = code;
-    codeModal.style.display = 'flex';
-  } catch(e){
-    // fallback: show modal with code for manual copy
-    codeDisplay.textContent = code;
-    codeModal.style.display = 'flex';
-    showNotification('✗ copy failed — use the modal to copy manually');
+el.lineSlider.addEventListener('input', () => {
+  state.numLines = parseInt(el.lineSlider.value, 10);
+  el.lineCountDisplay.textContent = state.numLines;
+  UI.updateLayout();
+  UI.updateStageScale();
+  Render.draw();
+});
+
+el.thicknessSlider.addEventListener('input', () => {
+  state.lineThickness = parseFloat(el.thicknessSlider.value);
+  el.thicknessVal.textContent = state.lineThickness.toFixed(1);
+  Render.draw();
+});
+
+el.fpsSlider.addEventListener('input', () => {
+  state.fps = parseInt(el.fpsSlider.value, 10);
+  el.fpsVal.textContent = state.fps;
+});
+
+el.playBtn.addEventListener('click', () => Anim.play());
+el.pauseBtn.addEventListener('click', () => Anim.pause());
+
+el.resetBtn.addEventListener('click', () => {
+  // Reset state to defaults
+  state.numLines = CONFIG.wave.defaultLineCount;
+  state.lineThickness = CONFIG.wave.defaultThickness;
+  state.fps = CONFIG.animation.defaultFps;
+  state.phase = Math.random() * 1000;
+  
+  // Reset UI controls
+  el.lineSlider.value = CONFIG.wave.defaultLineCount;
+  el.thicknessSlider.value = CONFIG.wave.defaultThickness;
+  el.fpsSlider.value = CONFIG.animation.defaultFps;
+  el.autoStretch.checked = true;
+  el.autoZoom.checked = false;
+  el.invertCheckbox.checked = false;
+  el.colorPicker.value = CONFIG.colors.defaultLine;
+  el.bgPicker.value = CONFIG.colors.defaultBackground;
+  
+  // Update displays
+  el.lineCountDisplay.textContent = state.numLines;
+  el.thicknessVal.textContent = state.lineThickness.toFixed(1);
+  el.fpsVal.textContent = state.fps;
+  
+  // Regenerate and redraw
+  WaveGen.regenerateAll();
+  UI.updateLayout();
+  UI.updateStageScale();
+  Render.draw();
+  UI.resetEasterEgg();
+});
+
+[el.colorPicker, el.bgPicker, el.invertCheckbox, el.autoStretch].forEach(e => {
+  e.addEventListener('input', () => {
+    UI.updateLayout();
+    Render.draw();
+  });
+  e.addEventListener('change', () => {
+    UI.updateLayout();
+    Render.draw();
+  });
+});
+
+el.autoZoom.addEventListener('change', () => UI.updateStageScale());
+
+window.addEventListener('resize', debounce(() => {
+  UI.updateLayout();
+  Render.draw();
+}, 150));
+
+el.savePngBtn.addEventListener('click', () => Export.savePNG());
+el.downloadBtn.addEventListener('click', () => Export.downloadHTML());
+el.showCodeBtn.addEventListener('click', () => Export.showModal());
+el.copyModalBtn.addEventListener('click', () => Export.copyCode());
+el.closeModalBtn.addEventListener('click', () => Export.closeModal());
+
+el.codeModal.addEventListener('click', (e) => {
+  if (e.target === el.codeModal) Export.closeModal();
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && !e.target.matches('input,textarea,button')) {
+    e.preventDefault();
+    if (state.animating) Anim.pause();
+    else Anim.play();
+  }
+  if (e.code === 'KeyR' && !e.target.matches('input,textarea')) {
+    e.preventDefault();
+    state.phase = Math.random() * 1000;
+    WaveGen.regenerateAll();
+    Render.draw();
+    UI.resetEasterEgg();
   }
 });
 
-/* Download HTML */
-downloadBtn.addEventListener('click', () => {
-  const code = generateCanvasOnlyHTML();
-  const blob = new Blob([code], { type: 'text/html' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'pulsar-canvas.html';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showNotification('✓ HTML saved');
-});
-
-/* Show code modal */
-showCodeBtn.addEventListener('click', () => {
-  const code = generateCanvasOnlyHTML();
-  codeDisplay.textContent = code;
-  codeModal.style.display = 'flex';
-});
-closeModalBtn.addEventListener('click', () => { codeModal.style.display = 'none'; });
-codeModal.addEventListener('click', (e) => { if (e.target === codeModal) codeModal.style.display = 'none'; });
-
-/* ---------- Init ---------- */
-function init(){
-  lineCountDisplay.textContent = numLines;
-  thicknessVal.textContent = lineThickness.toFixed(1);
-  fpsVal.textContent = fps;
-  updateLayoutAndWaves();
-  updateStageScale();
-  waves = [];
-  for (let i=0;i<numLines;i++) waves.push(generateWave(i, phase));
-  draw();
-  requestAnimationFrame(animateRAF);
+/* ========== INIT ========== */
+function init() {
+  el.lineCountDisplay.textContent = state.numLines;
+  el.thicknessVal.textContent = state.lineThickness.toFixed(1);
+  el.fpsVal.textContent = state.fps;
+  UI.updateLayout();
+  UI.updateStageScale();
+  WaveGen.regenerateAll();
+  Render.draw();
+  requestAnimationFrame((ts) => Anim.loop(ts));
 }
-init();
 
+init();
 </script>
 </body>
 </html>
