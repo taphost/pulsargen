@@ -21,7 +21,7 @@ Simply open the `index.html` file in any modern web browser.
 - **Pause/Play Button**: Freeze or resume the animation
 - **Regenerate Button**: Generate a new random wave pattern
 - **Save as PNG**: Download the current frame as a PNG image
-- **Copy Code**: Copy the standalone HTML to clipboard
+- **Show/Copy Code**: Copy the standalone HTML to clipboard
 - **Save as HTML**: Download the animation as an HTML file
 
 ## Technical Details
